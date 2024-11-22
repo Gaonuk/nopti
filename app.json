@@ -36,6 +36,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "577dfdfd-8c5c-48de-9cbe-826e5c184c14"
+      }
+    },
+    "owner": "gaonuk"
   }
 }
