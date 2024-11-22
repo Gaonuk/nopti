@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import {useLLM, LLAMA3_2_1B_URL} from 'react-native-executorch';
+import { LLAMA3_2_1B_URL, useLLM } from 'react-native-executorch';
 
 
 function useChatService() {
@@ -27,6 +27,15 @@ function useChatService() {
         }
 
         await llm.generate(prompt);
+    }
+
+    const summarizeResponse = async (content: string) => {
+        if (!isModelReady()) {
+            throw new Error('Model is not ready');
+        }
+
+        const prompt = "You are a summariser agent. You will summarise the following content while putting an emphasis on the area of interest and the of the content : " + content;
+        await generateResponse(prompt);
     }
 
     const getCurrentResponse = () => {

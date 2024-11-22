@@ -1,15 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
-import Animated, {
-	useSharedValue,
-	useAnimatedStyle,
-	withRepeat,
-	withTiming,
-	Easing,
-} from "react-native-reanimated";
-import {useLLM, LLAMA3_2_1B_URL} from 'react-native-executorch';
-import useChatService from "@/hooks/useChatService";
-import { generateResponse } from "@/functions/generateResponse";
+import { generateResponse } from '@/functions/generateResponse';
+import useChatService from '@/hooks/useChatService';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
 
 interface MessageType {
 	text: string;
