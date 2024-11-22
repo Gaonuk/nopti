@@ -28,12 +28,13 @@ export class ChatService {
     return this.llm.isModelGenerating;
   }
 
-  public async generateResponse(prompt: string): Promise<string | null> {
+  public async generateResponse(prompt: string): Promise<null> {
     if (!this.isModelReady()) {
       throw new Error('Model is not ready');
     }
     
-    return await this.llm.generate(prompt);
+    await this.llm.generate(prompt);
+    return null;
   }
 
   public getCurrentResponse(): string | null {
