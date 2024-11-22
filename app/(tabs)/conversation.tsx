@@ -1,8 +1,10 @@
 import { generateResponse } from '@/functions/generateResponse';
 import useChatService from '@/hooks/useChatService';
+import { useUserContent } from '@/hooks/useUserContent';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import { ContentItem } from '@/types/Content';
 
 interface MessageType {
 	text: string;
@@ -13,12 +15,65 @@ interface MessageType {
 export default function ConversationScreen() {
 	const scale = useSharedValue(1);
 	const [chatHistory, setChatHistory] = useState<Array<MessageType>>([]);
-	const { llm } = useChatService();
+	const { llm, rankContent } = useChatService();
+	const { userContent, loading, error } = useUserContent();
 	// const llm = useLLM({
 	// 	modelSource:  LLAMA3_2_1B_URL,
 	// 	tokenizerSource: require('../../assets/images/tokenizer.bin'),
 	// 	contextWindowLength: 6,
 	// });
+
+	useEffect(() => {
+		const processContent = async () => {
+			if (userContent) {
+				console.log('Fetched user content:', userContent);
+				
+				if (llm.isModelReady) {
+					try {
+						console.log('Raw userContent:', userContent);
+						
+						// Parse the string into an object if it's a string
+						const contentObject = typeof userContent === 'string' 
+							? JSON.parse(userContent) 
+							: userContent;
+						
+						console.log('Content object keys:', Object.keys(contentObject));
+						
+						// Extract the news_list array
+						const contentArray = contentObject.news_list;
+						
+						if (!Array.isArray(contentArray)) {
+							throw new Error('news_list is not an array');
+						}
+						
+						// Transform the data to match ContentItem interface
+						const formattedContent: ContentItem[] = contentArray.map(item => ({
+							id: item.id,
+							title: item.title || '',
+							summary: item.summary || '',
+							link: item.link || '',
+							date: item.date || new Date().toISOString(),
+							type: item.source || 'news',
+							passed: Boolean(item.passed),
+							shown: Boolean(item.shown)
+						}));
+							
+						console.log('Formatted content first item:', formattedContent[0]);
+
+						const rankedResults = await rankContent(formattedContent.slice(0, 3));
+						console.log('Ranked content results:', rankedResults);
+					} catch (err) {
+						console.error('Error ranking content:', err);
+					}
+				}
+			}
+			if (error) {
+				console.error('Error fetching content:', error);
+			}
+		};
+
+		processContent();
+	}, [userContent, error, llm.isModelReady]);
 
 	const animatedStyles = useAnimatedStyle(() => {
 		return {
@@ -34,6 +89,8 @@ export default function ConversationScreen() {
 		);
 	}, [scale]);
 
+	// Comment out the initial message generation
+	/*
 	useEffect(() => {
 		if (llm.isModelReady) {
 			generateResponse(llm, "What is the meaning of life?");
@@ -48,6 +105,7 @@ export default function ConversationScreen() {
 			}]);
 		}
 	}, [llm.response, llm.isModelGenerating]);
+	*/
 
 	return (
 		<View style={styles.container}>
@@ -62,6 +120,7 @@ export default function ConversationScreen() {
 						style={styles.messagesContainer}
 						contentContainerStyle={styles.scrollContent}
 					>
+						{/* Comment out the hello message and response
 						<View style={[styles.messageBox, styles.userMessage]}>
 							<Text>hello</Text>
 						</View>
@@ -70,6 +129,7 @@ export default function ConversationScreen() {
 								<Text>{llm.response}</Text>
 							</View>
 						)}
+						*/}
 					</ScrollView>
 				</View>
 			)}

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { LLAMA3_2_1B_URL, useLLM } from "react-native-executorch";
+import { ContentItem } from "../types/Content";
 
 let currentSuggestionIndex = 0;
 
@@ -68,6 +69,56 @@ function useChatService() {
     return llm.response;
   };
 
+  const formatContentForLLM = (content: ContentItem[]): string => {
+    const prompt = `
+      // ... same prompt template as before ...
+    `;
+    return prompt;
+  };
+
+  const rankContent = async (contentItems: ContentItem[]) => {
+    if (!isModelReady()) {
+      throw new Error("Model is not ready");
+    }
+
+    // Validate content array
+    if (!Array.isArray(contentItems)) {
+      throw new Error("Content must be an array");
+    }
+
+    if (contentItems.length === 0) {
+      return {
+        content_rankings: {},
+      };
+    }
+
+    const requiredFields: (keyof ContentItem)[] = [
+      "title",
+      "summary",
+      "link",
+      "date",
+      "type",
+      "passed",
+      "shown",
+    ];
+
+    contentItems.forEach((item, index) => {
+      requiredFields.forEach((field) => {
+        console.log("item", item);
+        console.log("field", field);
+        if (!(field in item)) {
+          throw new Error(
+            `Missing required field '${field}' in content item at index ${index}`
+          );
+        }
+      });
+    });
+
+    const prompt = formatContentForLLM(contentItems);
+    await generateResponse(prompt);
+    return getCurrentResponse();
+  };
+
   return useMemo(
     () => ({
       getDownloadProgress,
@@ -77,6 +128,7 @@ function useChatService() {
       getCurrentResponse,
       suggestContent,
       resetSuggestions,
+      rankContent,
       llm,
     }),
     [llm]

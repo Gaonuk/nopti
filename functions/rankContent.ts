@@ -1,6 +1,6 @@
-import { Model } from 'react-native-executorch/lib/typescript/types';
+import { Model } from "react-native-executorch/lib/typescript/types";
 
-import { ContentItem } from '../types/Content';
+import { ContentItem } from "../types/Content";
 
 function formatContentForLLM(content: ContentItem[]): string {
   const prompt = `
@@ -68,85 +68,31 @@ function formatContentForLLM(content: ContentItem[]): string {
     <input_context>
       Items to rank :
       ${content
-        .filter(item => !item.shown)
-        .map(item => `
+        .filter((item) => !item.shown)
+        .map(
+          (item) => `
         content_details:${item.title} + ${item.summary}
         id: ${content.indexOf(item)}
-        `)
+        `
+        )
         .join("\n---\n")}
 
       Historical data :
       ${content
-        .filter(item => item.shown)
-        .map(item => `
+        .filter((item) => item.shown)
+        .map(
+          (item) => `
         content_details:${item.title} + ${item.summary}
         liked: ${!item.passed}
-        `)
+        `
+        )
         .join("\n---\n")}
     </input_context>
   `;
   return prompt;
 }
 
-const fakeContentData: ContentItem[] = [
-  {
-    id: 1,
-    title: "How AI is Changing Mobile Development | Google I/O '24",
-    summary:
-      "Learn how artificial intelligence is revolutionizing the way we build mobile applications, featuring live demos and best practices.",
-    link: "https://youtube.com/watch?v=ai-mobile-dev",
-    date: "2024-03-10",
-    type: "youtube",
-    passed: false,
-    shown: true,
-  },
-  {
-    id: 2,
-    title: "The Future of React Native in 2024",
-    summary:
-      "TechCrunch explores the latest updates in React Native, including the new architecture and performance improvements.",
-    link: "https://techcrunch.com/2024/react-native-future",
-    date: "2024-03-15",
-    type: "article",
-    passed: false,
-    shown: false,
-  },
-  {
-    id: 3,
-    title: "Building AI-Powered Apps with React Native",
-    summary:
-      "Step-by-step tutorial on integrating ChatGPT and other AI models into your React Native applications.",
-    link: "https://youtube.com/watch?v=react-native-ai",
-    date: "2024-02-28",
-    type: "youtube",
-    passed: false,
-    shown: true,
-  },
-  {
-    id: 4,
-    title: "Mobile App Development Trends 2024",
-    summary:
-      "The Verge's comprehensive analysis of mobile development trends, including AI integration, cross-platform solutions, and more.",
-    link: "https://theverge.com/mobile-trends-2024",
-    date: "2024-03-01",
-    type: "article",
-    passed: false,
-    shown: false,
-  },
-  {
-    id: 5,
-    title: "React Native Radio: AI Integration Special",
-    summary:
-      "Special episode featuring experts discussing the integration of AI models in React Native applications.",
-    link: "https://reactnativeradio.com/episodes/ai-special",
-    date: "2024-03-05",
-    type: "podcast",
-    passed: false,
-    shown: false,
-  },
-];
-
-async function rankContent(llm: Model, contentItems: ContentItem[]) {
+export const rankContent = async (llm: Model, contentItems: ContentItem[]) => {
   // In input, put all the content objects. The ones already shown are treated as historical data. The other ones as suggestion.
   if (!llm.isModelReady) {
     throw new Error("Model is not ready");
@@ -171,6 +117,7 @@ async function rankContent(llm: Model, contentItems: ContentItem[]) {
     "passed",
     "shown",
   ];
+
   contentItems.forEach((item, index) => {
     requiredFields.forEach((field) => {
       if (!(field in item)) {
@@ -182,5 +129,6 @@ async function rankContent(llm: Model, contentItems: ContentItem[]) {
   });
 
   const prompt = formatContentForLLM(contentItems);
-  return await llm.generate(prompt);
-}
+  await llm.generate("Hello world");
+  return llm.response;
+};
