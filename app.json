@@ -10,13 +10,19 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "infoPlist": {
+        "NSSpeechRecognitionUsageDescription": "This app needs access to speech recognition to convert your voice to text",
+        "NSMicrophoneUsageDescription": "This app needs access to your microphone for voice input",
+        "NSSpeechSynthesisUsageDescription": "This app needs access to speech synthesis to convert text to voice"
+      },
       "bundleIdentifier": "com.gaonuk.nopti"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.gaonuk.nopti"
     },
     "web": {
       "bundler": "metro",
@@ -32,6 +38,13 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
         }
       ]
     ],
