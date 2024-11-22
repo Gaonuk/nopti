@@ -1,6 +1,6 @@
-import { Model } from "react-native-executorch/lib/typescript/types";
+import { Model } from 'react-native-executorch/lib/typescript/types';
 
-import { ContentItem } from "../types/Content";
+import { ContentItem } from '../types/Content';
 
 function formatContentForLLM(content: ContentItem[]): string {
   const prompt = `
@@ -129,6 +129,6 @@ export const rankContent = async (llm: Model, contentItems: ContentItem[]) => {
   });
 
   const prompt = formatContentForLLM(contentItems);
-  await llm.generate("Hello world");
+  await llm.generate(prompt);
   return llm.response;
 };

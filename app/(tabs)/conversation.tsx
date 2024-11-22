@@ -1,10 +1,10 @@
-import { generateResponse } from '@/functions/generateResponse';
+import { rankContent } from '@/functions/rankContent';
 import useChatService from '@/hooks/useChatService';
 import { useUserContent } from '@/hooks/useUserContent';
+import { ContentItem } from '@/types/Content';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { ContentItem } from '@/types/Content';
 
 interface MessageType {
 	text: string;
@@ -15,7 +15,7 @@ interface MessageType {
 export default function ConversationScreen() {
 	const scale = useSharedValue(1);
 	const [chatHistory, setChatHistory] = useState<Array<MessageType>>([]);
-	const { llm, rankContent } = useChatService();
+	const { llm } = useChatService();
 	const { userContent, loading, error } = useUserContent();
 	// const llm = useLLM({
 	// 	modelSource:  LLAMA3_2_1B_URL,
@@ -60,7 +60,7 @@ export default function ConversationScreen() {
 							
 						console.log('Formatted content first item:', formattedContent[0]);
 
-						const rankedResults = await rankContent(formattedContent.slice(0, 3));
+						const rankedResults = await rankContent(llm, formattedContent);
 						console.log('Ranked content results:', rankedResults);
 					} catch (err) {
 						console.error('Error ranking content:', err);

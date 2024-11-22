@@ -1,6 +1,7 @@
-import { useMemo } from "react";
-import { LLAMA3_2_1B_URL, useLLM } from "react-native-executorch";
-import { ContentItem } from "../types/Content";
+import { useMemo } from 'react';
+import { LLAMA3_2_1B_URL, useLLM } from 'react-native-executorch';
+
+import { ContentItem } from '../types/Content';
 
 let currentSuggestionIndex = 0;
 
