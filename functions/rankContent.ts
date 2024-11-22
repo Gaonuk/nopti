@@ -1,15 +1,6 @@
 import { Model } from 'react-native-executorch/lib/typescript/types';
 
-interface ContentItem {
-  id: number;
-  title: string;
-  summary: string;
-  link: string;
-  date: string;
-  type: "youtube" | "article" | "podcast";
-  passed: Boolean;
-  shown: Boolean;
-}
+import { ContentItem } from '../types/Content';
 
 function formatContentForLLM(content: ContentItem[]): string {
   const prompt = `
@@ -155,17 +146,17 @@ const fakeContentData: ContentItem[] = [
   },
 ];
 
-async function rankContent(llm: Model, content: ContentItem[]) {
+async function rankContent(llm: Model, contentItems: ContentItem[]) {
   // In input, put all the content objects. The ones already shown are treated as historical data. The other ones as suggestion.
   if (!llm.isModelReady) {
     throw new Error("Model is not ready");
   }
   // Validate content array
-  if (!Array.isArray(content)) {
+  if (!Array.isArray(contentItems)) {
     throw new Error("Content must be an array");
   }
 
-  if (content.length === 0) {
+  if (contentItems.length === 0) {
     return {
       content_rankings: {},
     };
@@ -180,7 +171,7 @@ async function rankContent(llm: Model, content: ContentItem[]) {
     "passed",
     "shown",
   ];
-  content.forEach((item, index) => {
+  contentItems.forEach((item, index) => {
     requiredFields.forEach((field) => {
       if (!(field in item)) {
         throw new Error(
@@ -190,6 +181,6 @@ async function rankContent(llm: Model, content: ContentItem[]) {
     });
   });
 
-  const prompt = formatContentForLLM(content);
+  const prompt = formatContentForLLM(contentItems);
   return await llm.generate(prompt);
 }
