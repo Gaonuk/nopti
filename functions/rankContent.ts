@@ -1,14 +1,14 @@
-import { useContext } from "react";
-import { Model } from "react-native-executorch/lib/typescript/types";
+import { Model } from 'react-native-executorch/lib/typescript/types';
 
 interface ContentItem {
+  id: number;
   title: string;
   summary: string;
   link: string;
   date: string;
   type: "youtube" | "article" | "podcast";
   passed: Boolean;
-  shown: boolean | null;
+  shown: Boolean;
 }
 
 function formatContentForLLM(content: ContentItem[]): string {
@@ -20,16 +20,11 @@ function formatContentForLLM(content: ContentItem[]): string {
     <input_format>
         The input will consist of:
         - A list of content items with their full details including:
-            * Title
-            * Summary
-            * Link
-            * Publication Date
-            * Content Type (youtube/article/podcast)
-            * User Interaction (passed/shown)
+            * content_details: A brief summary of the content
+            * id
         - Historical interaction data containing:
-            * Complete content details
-            * A boolean 'passed' indicating user's reaction (true = disliked, false = liked)
-            * View status (shown: true/false/null)
+            * content_details: A brief summary of the content
+            * A boolean 'liked' indicating user's reaction (true = liked, false = disliked)
     </input_format>
 
     <instructions>
@@ -53,57 +48,50 @@ function formatContentForLLM(content: ContentItem[]): string {
     </output_format>
 
     <example>
-        <historical_data>
-            [
-                {
-                    "title": "AI ethics in technology",
-                    "summary": "Discussion on AI ethics",
-                    "link": "https://example.com/ai-ethics",
-                    "date": "2024-03-01",
-                    "type": "article",
-                    "passed": true,
-                    "shown": true
-                }
-            ]
-        </historical_data>
-
         <potential_contents>
             [
-                {
-                    "title": "Ethical implications of ML",
-                    "summary": "Deep dive into ML ethics",
-                    "link": "https://example.com/ml-ethics",
-                    "date": "2024-03-15",
-                    "type": "article",
-                    "content_id": 10,
-                    "shown": null
-                }
+                {"content_details": "Ethical implications of machine learning", "id": 10},
+                {"content_details": "Latest Hollywood drama", "id": 11},
+                {"content_details": "Technological research innovations", "id": 12}
             ]
         </potential_contents>
+
+        <historical_data>
+            [
+                {"content_details": "AI ethics in technology", "liked": true},
+                {"content_details": "Celebrity gossip", "liked": false}
+            ]
+        </historical_data>
 
         <expected_output>
             {
                 "content_rankings": {
-                    10: 1
+                    12: 1,
+                    10: 2,
+                    11: 3
                 }
             }
         </expected_output>
     </example>
 
     <input_context>
-        ${content
-          .map(
-            (item) => `
-            Title: ${item.title}
-            Summary: ${item.summary}
-            Link: ${item.link}
-            Date: ${item.date}
-            Type: ${item.type}
-            Passed: ${item.passed}
-            Shown: ${item.shown}
-            `
-          )
-          .join("\n---\n")}
+      Items to rank :
+      ${content
+        .filter(item => !item.shown)
+        .map(item => `
+        content_details:${item.title} + ${item.summary}
+        id: ${content.indexOf(item)}
+        `)
+        .join("\n---\n")}
+
+      Historical data :
+      ${content
+        .filter(item => item.shown)
+        .map(item => `
+        content_details:${item.title} + ${item.summary}
+        liked: ${!item.passed}
+        `)
+        .join("\n---\n")}
     </input_context>
   `;
   return prompt;
@@ -111,6 +99,7 @@ function formatContentForLLM(content: ContentItem[]): string {
 
 const fakeContentData: ContentItem[] = [
   {
+    id: 1,
     title: "How AI is Changing Mobile Development | Google I/O '24",
     summary:
       "Learn how artificial intelligence is revolutionizing the way we build mobile applications, featuring live demos and best practices.",
@@ -121,6 +110,7 @@ const fakeContentData: ContentItem[] = [
     shown: true,
   },
   {
+    id: 2,
     title: "The Future of React Native in 2024",
     summary:
       "TechCrunch explores the latest updates in React Native, including the new architecture and performance improvements.",
@@ -131,6 +121,7 @@ const fakeContentData: ContentItem[] = [
     shown: false,
   },
   {
+    id: 3,
     title: "Building AI-Powered Apps with React Native",
     summary:
       "Step-by-step tutorial on integrating ChatGPT and other AI models into your React Native applications.",
@@ -141,6 +132,7 @@ const fakeContentData: ContentItem[] = [
     shown: true,
   },
   {
+    id: 4,
     title: "Mobile App Development Trends 2024",
     summary:
       "The Verge's comprehensive analysis of mobile development trends, including AI integration, cross-platform solutions, and more.",
@@ -148,9 +140,10 @@ const fakeContentData: ContentItem[] = [
     date: "2024-03-01",
     type: "article",
     passed: false,
-    shown: null,
+    shown: false,
   },
   {
+    id: 5,
     title: "React Native Radio: AI Integration Special",
     summary:
       "Special episode featuring experts discussing the integration of AI models in React Native applications.",
@@ -163,6 +156,7 @@ const fakeContentData: ContentItem[] = [
 ];
 
 async function rankContent(llm: Model, content: ContentItem[]) {
+  // In input, put all the content objects. The ones already shown are treated as historical data. The other ones as suggestion.
   if (!llm.isModelReady) {
     throw new Error("Model is not ready");
   }
