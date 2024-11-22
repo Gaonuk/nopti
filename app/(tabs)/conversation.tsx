@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity } from 'react-native';
 import Animated, {
 	useSharedValue,
@@ -7,23 +7,32 @@ import Animated, {
 	withTiming,
 	Easing,
 } from "react-native-reanimated";
-import { ChatService, MessageType } from '../../service/chat_service';
+import {useLLM, LLAMA3_2_1B_URL} from 'react-native-executorch';
+import useChatService from "@/hooks/useChatService";
+import { generateResponse } from "@/functions/generateResponse";
 
-const chatService = new ChatService();
+interface MessageType {
+	text: string;
+	from: 'user' | 'ai';
+}
+
 
 export default function ConversationScreen() {
-	const [chatHistory, setChatHistory] = useState<Array<MessageType>>([]);
-	const [inputText, setInputText] = useState('');
 	const scale = useSharedValue(1);
-
-	const isModelReady = useMemo(() => chatService.isModelReady(), []);
+	const [chatHistory, setChatHistory] = useState<Array<MessageType>>([]);
+	const { llm } = useChatService();
+	// const llm = useLLM({
+	// 	modelSource:  LLAMA3_2_1B_URL,
+	// 	tokenizerSource: require('../../assets/images/tokenizer.bin'),
+	// 	contextWindowLength: 6,
+	// });
 
 	const animatedStyles = useAnimatedStyle(() => {
 		return {
 			transform: [{ scale: scale.value }],
 		};
 	});
-
+	
 	useEffect(() => {
 		scale.value = withRepeat(
 			withTiming(1.2, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
@@ -32,32 +41,26 @@ export default function ConversationScreen() {
 		);
 	}, [scale]);
 
-	const handleSendMessage = async () => {
-		if (!inputText.trim()) return;
-		
-		const userMessage: MessageType = { text: inputText, from: 'user' };
-		setChatHistory(prev => [...prev, userMessage]);
-		
-		try {
-			const response = await chatService.generateResponse(inputText);
-			if (response) {
-				const aiMessage: MessageType = { text: response, from: 'ai' };
-				setChatHistory(prev => [...prev, aiMessage]);
-			}
-		} catch (error) {
-			console.error('Error generating response:', error);
+	useEffect(() => {
+		if (llm.isModelReady) {
+			generateResponse(llm, "What is the meaning of life?");
 		}
-		
-		setInputText('');
-	};
+	}, [llm.isModelReady]);
+
+	useEffect(() => {
+		if (!llm.isModelGenerating && llm.response) {
+			setChatHistory(prev => [...prev, { 
+				text: llm.response!, 
+				from: 'ai' 
+			}]);
+		}
+	}, [llm.response, llm.isModelGenerating]);
 
 	return (
 		<View style={styles.container}>
-			{!isModelReady ? (
+			{!llm.isModelReady ? (
 				<View style={styles.loadingContainer}>
-					<Text style={styles.loadingText}>
-						Loading model... {(chatService.getDownloadProgress() * 100).toFixed(0)}%
-					</Text>
+					<Text style={styles.loadingText}>Loading model... {(llm.downloadProgress * 100).toFixed(0)}%</Text>
 					<Animated.View style={[styles.circle, animatedStyles]} />
 				</View>
 			) : (
@@ -66,34 +69,15 @@ export default function ConversationScreen() {
 						style={styles.messagesContainer}
 						contentContainerStyle={styles.scrollContent}
 					>
-						{chatHistory?.map((message, index) => (
-							<View 
-								key={index} 
-								style={[
-									styles.messageBox, 
-									message.from === 'user' ? styles.userMessage : styles.aiMessage
-								]}
-							>
-								<Text style={message.from === 'user' ? styles.userMessageText : styles.aiMessageText}>
-									{message.text}
-								</Text>
+						<View style={[styles.messageBox, styles.userMessage]}>
+							<Text>hello</Text>
+						</View>
+						{llm.response && (
+							<View style={[styles.messageBox, styles.aiMessage]}>
+								<Text>{llm.response}</Text>
 							</View>
-						))}
+						)}
 					</ScrollView>
-					<View style={styles.inputContainer}>
-						<TextInput
-							style={styles.input}
-							value={inputText}
-							onChangeText={setInputText}
-							placeholder="Type a message..."
-						/>
-						<TouchableOpacity 
-							style={styles.sendButton}
-							onPress={handleSendMessage}
-						>
-							<Text style={styles.sendButtonText}>Send</Text>
-						</TouchableOpacity>
-					</View>
 				</View>
 			)}
 		</View>
@@ -185,11 +169,5 @@ const styles = StyleSheet.create({
 	},
 	scrollContent: {
 		flexGrow: 1,
-	},
-	userMessageText: {
-		color: '#ffffff',
-	},
-	aiMessageText: {
-		color: '#000000',
 	},
 });
