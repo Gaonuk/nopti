@@ -129,6 +129,8 @@ export const rankContent = async (llm: Model, contentItems: ContentItem[]) => {
   });
 
   const prompt = formatContentForLLM(contentItems);
+  console.log('Prompt:', prompt);
   await generateResponse(llm,prompt);
+  console.log('Response:', llm.response);
   return llm.response;
 };

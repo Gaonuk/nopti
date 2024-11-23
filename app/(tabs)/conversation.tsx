@@ -80,7 +80,7 @@ export default function ConversationScreen() {
 			transform: [{ scale: scale.value }],
 		};
 	});
-	
+
 	useEffect(() => {
 		scale.value = withRepeat(
 			withTiming(1.2, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
