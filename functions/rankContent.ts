@@ -1,9 +1,10 @@
 import { Model } from 'react-native-executorch/lib/typescript/types';
 
 import { ContentItem } from '../types/Content';
+import { generateResponse } from './generateResponse';
 
-function formatContentForLLM(content: ContentItem[]): string {
-  const prompt = `
+export default function formatContentForLLM(content: ContentItem[]): string {
+  return `
     <context>
         You are a content recommendation agent ranking potential content based on user interaction history.
     </context>
@@ -89,7 +90,6 @@ function formatContentForLLM(content: ContentItem[]): string {
         .join("\n---\n")}
     </input_context>
   `;
-  return prompt;
 }
 
 export const rankContent = async (llm: Model, contentItems: ContentItem[]) => {
@@ -129,6 +129,6 @@ export const rankContent = async (llm: Model, contentItems: ContentItem[]) => {
   });
 
   const prompt = formatContentForLLM(contentItems);
-  await llm.generate(prompt);
+  await generateResponse(llm,prompt);
   return llm.response;
 };

@@ -59,8 +59,8 @@ export default function ConversationScreen() {
 						}));
 							
 						console.log('Formatted content first item:', formattedContent[0]);
-
 						const rankedResults = await rankContent(llm, formattedContent);
+
 						console.log('Ranked content results:', rankedResults);
 					} catch (err) {
 						console.error('Error ranking content:', err);
